@@ -1,345 +1,340 @@
-# 🚁 แผนที่รายงานโดรน
+# 🚁 Drone Map Report
 
-แอปพลิเคชันเว็บสำหรับการรายงานการมองเห็นโดรน พร้อมแผนที่โต้ตอบ และแผงควบคุมผู้ดูแลระบบ
+ระบบแผนที่รายงานการพบเห็นโดรน
 
-## 🌟 ฟีเจอร์
-
-- ✅ **ส่วนหน้า (Public)** - แบบฟอร์มส่งรายงานโดรนพร้อมแผนที่
-- ✅ **ระบบ Login** - ผู้ดูแลระบบเข้าสู่ได้ด้วย admin/admin
-- ✅ **แผนที่โต้ตอบ** - ใช้ Leaflet.js แสดงตำแหน่งรายงาน
-- ✅ **รายงานเสริม** - ชื่อผู้แจ้ง, พิกัด, ความสูง, รูปภาพ
-- ✅ **แผงควบคุม Admin** - จัดการรายงาน, ลบข้อมูล, เปลี่ยนรหัสผ่าน
-- ✅ **ภาษาไทย** - อินเทอร์เฟซทั้งหมดเป็นภาษาไทย
-- ✅ **ฐานข้อมูล SQLite** - WAL mode สำหรับการทำงานที่ดี
-
-## 📁 โครงสร้างโปรเจค
-
-```
-Drone-Map/
-├── frontend/
-│   ├── index.html       # หน้าแรก (public)
-│   ├── app.js           # Logic หน้าแรก
-│   ├── login.html       # หน้าเข้าสู่ระบบ
-│   ├── admin.html       # แผงควบคุม Admin
-│   └── admin.js         # Logic Admin Dashboard
-├── backend/
-│   ├── server.js        # Express server
-│   ├── db.js            # SQLite logic
-│   └── app.db           # ฐานข้อมูล (สร้างอัตโนมัติ)
-├── uploads/             # โฟลเดอร์รูปภาพ
-├── package.json         # Dependencies
-└── README.md            # ไฟล์นี้
-```
-
-## 🚀 ติดตั้งและเรียกใช้
-
-### 1. ติดตั้ง Dependencies
-
-```bash
-cd c:\Users\MosZerG\Desktop\Drone-Map
-npm install
-```
-
-### 2. เรียกใช้เซิร์ฟเวอร์
-
-```bash
-npm start
-```
-
-เซิร์ฟเวอร์จะเริ่มทำงานที่: `http://localhost:5000`
-
-## 📖 วิธีการใช้
-
-### หน้าแรก (Public)
-1. เข้าไป `http://localhost:5000`
-2. กรอกชื่อ, ตำแหน่ง, รายละเอียด
-3. ป้อนพิกัด (หรือคลิกที่แผนที่ หรือใช้ปุ่ม "📍 ตำแหน่งของฉัน")
-4. เพิ่มรูป (ไม่บังคับ)
-5. คลิก "ส่งรายงาน"
-
-### แผงควบคุม Admin
-1. คลิก "🔐 เข้าสู่ระบบผู้ดูแลระบบ" 
-2. ชื่อผู้ใช้: **admin**
-3. รหัสผ่าน: **admin**
-4. เข้าแผงควบคุม:
-   - 📊 **แดชบอร์ด** - แสดงแผนที่ทั้งหมด
-   - 📋 **รายงาน** - จัดการรายงาน, ลบข้อมูล
-   - 🔑 **เปลี่ยนรหัสผ่าน** - อัปเดตรหัส
-
-## 🔐 API Endpoints
-
-### Public
-- `GET /` - หน้าแรก
-- `POST /report` - ส่งรายงานใหม่
-- `GET /reports` - ดึงรายงานทั้งหมด
-
-### Admin (ต้องมี Session ID)
-- `POST /login` - เข้าสู่ระบบ
-- `POST /logout` - ออกจากระบบ
-- `GET /auth-status` - ตรวจสอบสถานะ
-- `DELETE /report/:id` - ลบรายงาน
-- `POST /change-password` - เปลี่ยนรหัสผ่าน
-
-## 💾 ฐานข้อมูล
-
-### ตาราง `users`
-| Column | Type | อธิบาย |
-|--------|------|--------|
-| id | INTEGER | Primary key |
-| username | TEXT | ชื่อผู้ใช้ (unique) |
-| password | TEXT | รหัสผ่าน |
-| created_at | DATETIME | เวลาสร้าง |
-
-### ตาราง `reports`
-| Column | Type | อธิบาย |
-|--------|------|--------|
-| id | INTEGER | Primary key |
-| reporter_name | TEXT | ชื่อผู้แจ้ง |
-| location | TEXT | ตำแหน่ง |
-| description | TEXT | รายละเอียด |
-| latitude | REAL | ละติจูด |
-| longitude | REAL | ลองจิจูด |
-| altitude | REAL | ความสูง (ม.) |
-| image_filename | TEXT | ชื่อไฟล์รูป |
-| created_at | DATETIME | เวลาสร้าง |
-
-## 🔧 ตั้งค่า
-
-เส้นจำหน่วย
-
-```javascript
-// backend/server.js
-const PORT = 5000; // เปลี่ยน port ในที่นี้
-```
-
-ค่ามี WLA mode:
-```javascript
-// backend/db.js
-db.run('PRAGMA journal_mode = WAL'); // เปิด WAL mode
-```
-
-## 📝 ตัวอย่างข้อมูลเริ่มต้น
-
-ผู้ดูแลระบบ:
-- ชื่อผู้ใช้: `admin`
-- รหัสผ่าน: `admin`
-
-หมายเหตุ: เปลี่ยนรหัสผ่านเมื่อใช้งานจริง
-
-## 🛠️ เทคโนโลยี
-
-**Frontend:**
-- HTML5 / CSS3
-- Vanilla JavaScript
-- Leaflet.js (แผนที่)
-
-**Backend:**
-- Node.js
-- Express.js
-- SQLite3
-- Multer (อัปโหลดไฟล์)
-
-## 📦 Dependencies
-
-```json
-{
-  "express": "^4.18.2",
-  "sqlite3": "^5.1.6",
-  "multer": "^1.4.5-lts.1",
-  "nodemon": "^2.0.20" (dev)
-}
-```
-
-## 🚨 Troubleshooting
-
-**Port ใช้งาน:**
-- เปลี่ยน PORT ใน `backend/server.js`
-
-**ไม่มี node.exe:**
-- ติดตั้ง Node.js จาก https://nodejs.org/
-
-**ข้อผิดพลาด SQLite:**
-- ลบไฟล์ `app.db` และ `app.db-*` แล้วเริ่มใหม่
-
-**ไม่สามารถอัปโหลดรูป:**
-- ตรวจสอบสิทธิ์เขียนใน `/uploads`
-
-## 📚 ฟीเจอร์ต่อไป (Optional)
-
-- [ ] ระบบ Search/Filter
-- [ ] Export ข้อมูลเป็น CSV/PDF
-- [ ] Notification (Email/SMS)
-- [ ] Multiple users
-- [ ] Reporting categories
-- [ ] Mobile app
-- [ ] Real-time updates
-
-## 📄 License
-
-MIT
-
-## 👨‍💻 ผู้พัฒนา
-
-สร้างด้วย ❤️ สำหรับการตรวจสอบโดรน
+Web-based drone reporting system with an interactive map and admin dashboard.
 
 ---
 
-**ติดต่อ & Support:** ติดต่อผู้ดูแลระบบ
+# Update
 
-## Project Structure
+* Version 1   03/24/2026
+* Version 1.1 03/25/2026 
+* Version 1.2 03/26/2026 
+* Version 1.4 03/28/2026 last
 
-```
+---
+
+# 🇹🇭 ภาษาไทย
+
+## 📌 เกี่ยวกับระบบ
+
+ระบบเว็บสำหรับรายงานการพบเห็นโดรน โดยผู้ใช้สามารถระบุตำแหน่งบนแผนที่และส่งรายงานได้ทันที
+ผู้ดูแลระบบสามารถเข้าสู่ระบบเพื่อจัดการข้อมูลรายงานได้ผ่านหน้า Admin
+
+---
+
+## ✨ ฟีเจอร์หลัก
+
+### ผู้ใช้งานทั่วไป
+
+* ฟอร์มรายงานโดรน
+* เลือกตำแหน่งจากแผนที่
+* ปุ่ม **ตำแหน่งของฉัน**
+* ปุ่ม **ล้างพิกัด**
+* สลับมุมมอง **แผนที่ / ดาวเทียม**
+* โหมดแผนที่เต็มจอ
+* กรองรายงานตามช่วงเวลา
+* คลิกดูรายละเอียดรายงานได้
+
+### ผู้ดูแลระบบ
+
+* ระบบ Login Admin
+* ดูรายการรายงานทั้งหมด
+* ลบรายงาน
+* เปลี่ยนรหัสผ่านผู้ดูแล
+
+---
+
+## 📁 โครงสร้างโปรเจกต์
+
+```text
 Drone-Map/
+│
 ├── frontend/
-│   ├── index.html        # Main HTML page
-│   └── app.js            # Frontend JavaScript
+│   ├── index.html
+│   ├── app.js
+│   ├── login.html
+│   ├── admin.html
+│   └── admin.js
+│
 ├── backend/
-│   ├── server.js         # Express server
-│   ├── db.js             # SQLite database logic
-│   └── app.db            # SQLite database file (created on first run)
-├── package.json          # Node.js dependencies
-└── README.md             # This file
+│   ├── server.js
+│   ├── db.js
+│   └── app_fresh.db
+│
+├── uploads/
+│
+├── package.json
+├── run-server.bat
+├── run-server.ps1
+└── README.md
 ```
 
-## Features
+---
 
-- **Simple form**: Submit drone location and description
-- **Real-time updates**: Reports display immediately after submission
-- **Sorted by time**: Newest reports appear first
-- **Responsive design**: Works on desktop and mobile
-- **SQLite WAL mode**: Better concurrency and performance
-- **Proper error handling**: User-friendly error messages
+## 🧰 ความต้องการระบบ
 
-## Setup Instructions
+* Node.js เวอร์ชัน **18 ขึ้นไป**
 
-### 1. Install Dependencies
+ดาวน์โหลดได้ที่
+
+https://nodejs.org
+
+---
+
+## 🚀 วิธีติดตั้ง
+
+Clone โปรเจกต์
+
+```bash
+git clone https://github.com/zenmos17/Drone-Map.git
+```
+
+ติดตั้ง dependencies
 
 ```bash
 npm install
 ```
 
-This installs:
-- **express**: Web framework
-- **sqlite3**: SQLite database driver
-- **nodemon** (dev): Auto-restart on file changes
+---
 
-### 2. Run the Application
+## ▶️ วิธีรันเซิร์ฟเวอร์
+
+รันด้วยคำสั่ง
 
 ```bash
 npm start
 ```
 
-Or with auto-reload during development:
+เซิร์ฟเวอร์จะทำงานที่
+
+```
+http://localhost:3333
+```
+
+หรือสามารถใช้ไฟล์
+
+Windows
+
+```
+run-server.bat
+```
+
+PowerShell
+
+```
+run-server.ps1
+```
+
+---
+
+## 🔐 บัญชี Admin เริ่มต้น
+
+Username
+
+```
+admin
+```
+
+Password
+
+```
+admin
+```
+
+⚠️ ควรเปลี่ยนรหัสผ่านหลังจากเข้าสู่ระบบครั้งแรก
+
+---
+
+## 🔐 บัญชี SuperAdmin เริ่มต้น
+
+Username
+
+```
+superadmin
+```
+
+Password
+
+```
+superadmin
+```
+
+⚠️ ควรเปลี่ยนรหัสผ่านหลังจากเข้าสู่ระบบครั้งแรก
+
+---
+
+## 🌐 API หลัก
+
+### Public API
+
+เปิดหน้าเว็บไซต์
+
+```
+GET /
+```
+
+ส่งรายงานโดรน
+
+```
+POST /report
+```
+
+ดึงรายการรายงาน
+
+```
+GET /reports
+```
+
+---
+
+### Admin API
+
+เข้าสู่ระบบ
+
+```
+POST /login
+```
+
+ออกจากระบบ
+
+```
+POST /logout
+```
+
+ตรวจสอบสถานะ login
+
+```
+GET /auth-status
+```
+
+ลบรายงาน
+
+```
+DELETE /report/:id
+```
+
+เปลี่ยนรหัสผ่าน
+
+```
+POST /change-password
+```
+
+---
+
+## 💾 ฐานข้อมูล
+
+ระบบใช้ฐานข้อมูล
+
+```
+SQLite
+```
+
+ไฟล์ฐานข้อมูล
+
+```
+backend/app_fresh.db
+```
+
+ตารางข้อมูล
+
+```
+users
+reports
+```
+
+เปิดใช้งาน **WAL mode** เพื่อรองรับการใช้งานพร้อมกันหลายผู้ใช้
+
+---
+
+## 🛠️ การแก้ปัญหา
+
+### หน้าเว็บไม่อัปเดต
+
+กด
+
+```
+Ctrl + F5
+```
+
+### Port ถูกใช้งานอยู่
+
+แก้ไขค่า `PORT` ในไฟล์
+
+```
+backend/server.js
+```
+
+ค่าเริ่มต้นคือ
+
+```
+3333
+```
+
+### ขาด dependency
+
+รันคำสั่ง
 
 ```bash
-npm run dev
+npm install
 ```
 
-The server will start on `http://localhost:3000`
+---
 
-### 3. Open in Browser
+# 🇺🇸 English
 
-Navigate to:
-```
-http://localhost:3000
-```
+## 📌 About
 
-## API Endpoints
+Drone Map Report is a web application for reporting drone sightings.
+Users can submit reports with map coordinates while administrators can manage reports through a secure admin dashboard.
 
-### POST /report
-Submit a new drone report
+---
 
-**Request:**
-```json
-{
-  "location": "Central Park",
-  "description": "Drone sighting near the lake"
-}
-```
+## ✨ Features
 
-**Response (201 Created):**
-```json
-{
-  "id": 1,
-  "location": "Central Park",
-  "description": "Drone sighting near the lake",
-  "created_at": "2024-01-15T10:30:00.000Z"
-}
+* Public drone report submission
+* Interactive map location selection
+* GPS "My Location" button
+* Map / Satellite view
+* Fullscreen map support
+* Report filtering by date/time
+* Admin dashboard for managing reports
+* SQLite database backend
+
+---
+
+## 🚀 Installation
+
+```bash
+npm install
 ```
 
-### GET /reports
-Get all drone reports (ordered by newest first)
+---
 
-**Response (200 OK):**
-```json
-[
-  {
-    "id": 2,
-    "location": "Golden Gate Bridge",
-    "description": "Red drone observed",
-    "created_at": "2024-01-15T11:00:00.000Z"
-  },
-  {
-    "id": 1,
-    "location": "Central Park",
-    "description": "Drone sighting near the lake",
-    "created_at": "2024-01-15T10:30:00.000Z"
-  }
-]
+## ▶️ Run Server
+
+```bash
+npm start
 ```
 
-## Database Schema
+Server URL
 
-### reports Table
+```
+http://localhost:3333
+```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER | Primary key (auto-increment) |
-| location | TEXT | Drone report location |
-| description | TEXT | Detailed description |
-| created_at | DATETIME | Timestamp (auto-set) |
+---
 
-## Code Notes
+## 👨‍💻 Author
 
-### Backend
+Pongsaton Ditkrajan
 
-- **server.js**: Express app with routes and middleware
-- **db.js**: SQLite database connection and queries
-  - Uses callbacks for async operations
-  - Enables WAL mode for better performance
-  - Auto-creates tables on startup
+---
 
-### Frontend
+## 📄 License
 
-- **index.html**: Modern, responsive UI with gradient design
-- **app.js**: Client-side form handling and dynamic content
-  - Fetches reports and updates display
-  - XSS protection with `escapeHtml()`
-  - Auto-hiding success/error messages
+All Rights Reserved
 
-## Troubleshooting
-
-**Port 3000 already in use:**
-- Change `PORT` in `backend/server.js`
-- Or kill existing process on port 3000
-
-**Database locked errors:**
-- This is fixed by enabling WAL mode in `db.js`
-- Delete `app.db-wal` and `app.db-shm` files if issues persist
-
-**Module not found errors:**
-- Run `npm install` again
-- Ensure `node_modules` folder exists
-
-## Next Steps (Optional Enhancements)
-
-- Add database delete/edit functionality
-- Implement user authentication
-- Add map visualization with Leaflet.js
-- Add file upload for drone images
-- Implement search/filter by location
-- Add database backup functionality
-
-## License
-
-MIT
+Copyright (c) 2026  
+Pongsaton Ditkrajan (พงศธร ดิษฐกระจันทร์)
