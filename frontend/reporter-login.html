@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบผู้แจ้ง</title>
+  <link rel="icon" type="image/png" href="img//logo/logo.png">
+  <link rel="stylesheet" href="css/reporter-login.css">
+</head>
+<body>
+  <main class="login-container">
+    <h1>เข้าสู่ระบบผู้แจ้ง</h1>
+    <p class="subtitle">กรอกชื่อและเบอร์โทรเพื่อเริ่มแจ้งเหตุ</p>
+
+    <div id="message" class="message" role="alert" aria-live="polite"></div>
+
+    <form id="reporterLoginForm" novalidate>
+      <div class="form-group">
+        <label for="reporterName">ชื่อผู้แจ้ง *</label>
+        <input
+          type="text"
+          id="reporterName"
+          name="reporterName"
+          placeholder="เช่น สมชาย ใจดี"
+          autocomplete="name"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="reporterPhone">เบอร์โทรศัพท์ *</label>
+        <input
+          type="tel"
+          id="reporterPhone"
+          name="reporterPhone"
+          placeholder="เช่น 0812345678"
+          inputmode="numeric"
+          autocomplete="tel"
+          required
+        >
+      </div>
+
+      <button type="submit" class="login-button">เข้าสู่ระบบ</button>
+    </form>
+
+    <a class="admin-link" href="/login.html" target="_blank" rel="noopener noreferrer">สำหรับผู้ดูแลระบบ</a>
+  </main>
+
+  <script src="js/reporter-login.js"></script>
+</body>
+</html>

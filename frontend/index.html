@@ -1,0 +1,148 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานพบโดรน</title>
+  <link rel="icon" type="image/png" href="img//logo/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="top-navbar">
+      <div class="reporter-display">ผู้แจ้ง: <span id="currentReporterName">-</span></div>
+      <button type="button" id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
+    </header>
+
+    <div class="content">
+      <div class="form-section">
+        <h2>แจ้งพบโดรน</h2>
+        <form id="reportForm">
+          <div class="form-group">
+            <label for="location">ตำแหน่ง/สถานที่</label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              placeholder="ตำแหน่งสถานที่ที่คุณเห็นโดรน (เช่น ชื่อสถานที่, ถนน, หรือย่าน)"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="description">รายละเอียด</label>
+            <textarea
+              id="description"
+              name="description"
+              placeholder="อธิบายกิจกรรมของโดรน..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>พิกัด *</label>
+            <div class="coords-group">
+              <input
+                type="number"
+                id="latitude"
+                name="latitude"
+                placeholder="Latitude"
+                step="0.0001"
+                min="-90"
+                max="90"
+                required
+              >
+              <input
+                type="number"
+                id="longitude"
+                name="longitude"
+                placeholder="Longitude"
+                step="0.0001"
+                min="-180"
+                max="180"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="coords-actions">
+              <button type="button" class="btn-locate" onclick="getCurrentLocation()">ตำแหน่งของฉัน</button>
+              <button type="button" class="btn-clear-coords" onclick="clearCoordinates()">ล้างพิกัด</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="altitude">ความสูง (เมตร)</label>
+            <input
+              type="number"
+              id="altitude"
+              name="altitude"
+              placeholder="ความสูงเหนือระดับน้ำทะเล"
+              step="0.1"
+              min="0"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="image">รูปภาพ *</label>
+            <div class="file-input-wrapper">
+              <input
+                type="file"
+                id="image"
+                name="images"
+                accept="image/*"
+                multiple
+              >
+              <button type="button" id="captureImageBtn" class="btn-capture-image">ถ่ายรูป</button>
+              <label for="image" class="file-input-label">
+                คลิกหรือเลือกรูปภาพที่นี่
+              </label>
+              <div class="file-selection-row">
+                <div id="fileName" class="file-name"></div>
+                <button type="button" id="clearImagesBtn" class="btn-clear-images" style="display: none;">ล้างรูป</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit">ส่งคำแจ้ง</button>
+          <div id="formMessage" class="message"></div>
+        </form>
+      </div>
+
+      <div class="map-section">
+        <div id="mapContainer" class="map-container">
+          <button type="button" id="openMapFullscreenBtn" class="map-action-btn">เต็มจอ</button>
+          <button type="button" id="closeMapFullscreenBtn" class="map-action-btn" style="display: none;">ปิดเต็มจอ</button>
+          <div class="map-utility-controls">
+            <button type="button" id="mapLocateBtn" class="map-utility-btn">ตำแหน่งของฉัน</button>
+            <button type="button" id="mapClearBtn" class="map-utility-btn">ล้าง</button>
+          </div>
+          <div class="map-layer-toggle">
+            <button type="button" id="streetLayerBtn" class="map-layer-btn active">แผนที่</button>
+            <button type="button" id="satelliteLayerBtn" class="map-layer-btn">ดาวเทียม</button>
+          </div>
+          <div id="mapLoadingOverlay" class="map-loading-overlay" aria-hidden="true">
+            <div class="loading-box">Loading...</div>
+          </div>
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="submitLoadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-box">Loading...</div>
+  </div>
+
+  <div id="reportDetailModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeReportDetailModal()">&times;</span>
+      <h3>รายละเอียดรายงาน</h3>
+      <div id="reportDetailContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

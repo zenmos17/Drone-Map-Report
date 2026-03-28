@@ -1,0 +1,277 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผงควบคุม - รายงานพบโดรน</title>
+  <link rel="icon" type="image/png" href="img//logo/logo.png">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+    <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="navbar">
+    <h1>แผงควบคุม - รายงานพบโดรน</h1>
+    <div class="navbar-right">
+      <div class="user-info">
+        ผู้ใช้: <span id="usernameDisplay">admin</span>
+      </div>
+      <button class="btn btn-logout" onclick="changePasswordPrompt()">เปลี่ยนรหัสผ่าน</button>
+      <button class="btn btn-logout" onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="admin-header">
+      <h2 class="admin-title">แผงควบคุมผู้ดูแลระบบ</h2>
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchTab('dashboard', event)">แดชบอร์ด</button>
+        <button class="tab-btn" onclick="switchTab('reports', event)">รายงาน</button>
+        <button class="tab-btn" id="usersTabBtn" onclick="switchTab('users', event)" style="display: none;">จัดการบัญชีผู้ใช้</button>
+      </div>
+    </div>
+
+    <div id="dashboard" class="tab-content active">
+      <div id="dashboardMessage" class="message"></div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-number" id="totalReports">0</div>
+          <div class="stat-label">รวมรายงานทั้งหมด</div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <h2>แผนที่รายงาน</h2>
+          <div id="adminMapContainer" class="map-container">
+            <button type="button" id="openAdminMapFullscreenBtn" class="map-action-btn">เต็มจอ</button>
+            <button type="button" id="closeAdminMapFullscreenBtn" class="map-action-btn" style="display: none;">ปิดเต็มจอ</button>
+            <div class="map-utility-controls">
+              <button type="button" id="adminMapLocateBtn" class="map-utility-btn">ตำแหน่งของฉัน</button>
+              <button type="button" id="adminMapClearBtn" class="map-utility-btn">ล้าง</button>
+            </div>
+            <div class="map-layer-toggle">
+              <button type="button" id="adminStreetLayerBtn" class="map-layer-btn active">แผนที่</button>
+              <button type="button" id="adminSatelliteLayerBtn" class="map-layer-btn">ดาวเทียม</button>
+            </div>
+            <div id="map"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>ข้อมูล</h2>
+          <div id="dashboardInfo" style="line-height: 2;">
+            <p><strong>เวลาอัปเดตล่าสุด:</strong> <span id="lastUpdate">-</span></p>
+            <p><strong>ตำแหน่งรายงาน:</strong> <span id="markerCount">0</span> จุด</p>
+            <p><strong>สถานะระบบ:</strong> <span style="color: #27ae60;">●</span> ทำงาน</p>
+            <div class="marker-status-legend">
+              <div class="legend-title">สถานะสีหมุด</div>
+              <div class="legend-row"><span class="legend-dot dot-orange"></span><span>ยังไม่ได้ดู</span></div>
+              <div class="legend-row"><span class="legend-dot dot-blue"></span><span>รอรายงาน</span></div>
+              <div class="legend-row"><span class="legend-dot dot-green"></span><span>รายงานแล้ว</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="reports" class="tab-content">
+      <div id="reportsMessage" class="message"></div>
+
+      <div class="card">
+        <h2>รายการรายงานทั้งหมด</h2>
+        <div class="reports-toolbar">
+          <div class="datetime-filters">
+            <div class="filter-group">
+              <label for="adminReportsFrom">ตั้งแต่วันเวลา</label>
+              <input type="datetime-local" id="adminReportsFrom">
+            </div>
+            <div class="filter-group">
+              <label for="adminReportsTo">ถึงวันเวลา</label>
+              <input type="datetime-local" id="adminReportsTo">
+            </div>
+          </div>
+          <button type="button" id="clearAdminReportFilter" class="btn filter-btn">ล้างตัวกรอง</button>
+        </div>
+        <div class="scroll-x">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>ลำดับที่</th>
+                <th>ชื่อผู้แจ้ง</th>
+                <th>เบอร์ผู้แจ้ง</th>
+                <th>ตําแหน่ง/สถานที่</th>
+                <th>พิกัด</th>
+                <th>ความสูง</th>
+                <th>รูปภาพ</th>
+                <th>วันเวลา</th>
+                <th>การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+              <tr style="text-align: center;">
+                <td colspan="9">กำลังโหลดข้อมูล...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="users" class="tab-content">
+      <div id="usersMessage" class="message"></div>
+
+      <div class="card">
+        <h2>จัดการบัญชีผู้ใช้</h2>
+        <div class="users-toolbar">
+          <button type="button" class="btn btn-primary" onclick="openCreateUserModal()">สร้างผู้ใช้ใหม่</button>
+        </div>
+        <div class="scroll-x">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>ลำดับที่</th>
+                <th>ชื่อผู้ใช้</th>
+                <th>บทบาท</th>
+                <th>วันที่สร้าง</th>
+                <th>การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr style="text-align: center;">
+                <td colspan="5">กำลังโหลดข้อมูล...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="imageModal" class="modal">
+    <div class="modal-content image-modal-content">
+      <span class="modal-close" onclick="closeImageModal()">&times;</span>
+      <img id="modalImage" class="modal-image" alt="ภาพขยาย">
+    </div>
+  </div>
+
+  <div id="reportDetailModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeReportDetailModal()">&times;</span>
+      <h3>รายละเอียดรายงาน</h3>
+      <div id="reportDetailContent"></div>
+    </div>
+  </div>
+
+
+  <div id="actionReportModal" class="modal">
+    <div class="modal-content report-action-modal">
+      <span class="modal-close" onclick="closeActionReportModal()">&times;</span>
+      <h3>รายงาน</h3>
+      <div class="report-action-form">
+        <label for="actionReportDetail">รายละเอียดรายงาน</label>
+        <textarea id="actionReportDetail" class="report-action-textarea" placeholder="กรอกรายละเอียดที่ต้องการรายงาน..." required></textarea>
+        <div id="actionReportError" class="report-action-error"></div>
+        <div class="report-action-buttons">
+          <button type="button" class="btn btn-cancel-report" onclick="closeActionReportModal()">ยกเลิก</button>
+          <button type="button" class="btn btn-send-report" onclick="submitActionReport()">ส่งรายงาน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Management Modals -->
+  <div id="createUserModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeCreateUserModal()">&times;</span>
+      <h3>สร้างผู้ใช้ใหม่</h3>
+      <div class="user-form">
+        <div class="form-group">
+          <label for="newUsername">ชื่อผู้ใช้</label>
+          <input type="text" id="newUsername" placeholder="ป้อนชื่อผู้ใช้" required>
+        </div>
+        <div class="form-group">
+          <label for="newPassword">รหัสผ่าน</label>
+          <input type="password" id="newPassword" placeholder="ป้อนรหัสผ่าน" required>
+        </div>
+        <div class="form-group">
+          <label for="newRole">บทบาท</label>
+          <select id="newRole" required>
+            <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+            <option value="superadmin">ผู้ดูแลระบบระดับสูง (Superadmin)</option>
+          </select>
+        </div>
+        <div id="createUserError" class="error-message"></div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-cancel" onclick="closeCreateUserModal()">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" onclick="createUser()">สร้างผู้ใช้</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="editUserModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeEditUserModal()">&times;</span>
+      <h3>แก้ไขผู้ใช้</h3>
+      <div class="user-form">
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+          <label for="editUsername">ชื่อผู้ใช้</label>
+          <input type="text" id="editUsername" readonly>
+        </div>
+        <div class="form-group">
+          <label for="editRole">บทบาท</label>
+          <select id="editRole" required>
+            <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+            <option value="superadmin">ผู้ดูแลระบบระดับสูง (Superadmin)</option>
+          </select>
+        </div>
+        <div id="editUserError" class="error-message"></div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-cancel" onclick="closeEditUserModal()">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" onclick="updateUserRole()">บันทึกการเปลี่ยนแปลง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="changeUserPasswordModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeChangeUserPasswordModal()">&times;</span>
+      <h3>เปลี่ยนรหัสผ่านผู้ใช้</h3>
+      <div class="user-form">
+        <input type="hidden" id="changePasswordUserId">
+        <div class="form-group">
+          <label for="changePasswordUsername">ชื่อผู้ใช้</label>
+          <input type="text" id="changePasswordUsername" readonly>
+        </div>
+        <div class="form-group">
+          <label for="newUserPassword">รหัสผ่านใหม่</label>
+          <input type="password" id="newUserPassword" placeholder="ป้อนรหัสผ่านใหม่" required>
+        </div>
+        <div class="form-group">
+          <label for="confirmNewUserPassword">ยืนยันรหัสผ่านใหม่</label>
+          <input type="password" id="confirmNewUserPassword" placeholder="ป้อนรหัสผ่านใหม่อีกครั้ง" required>
+        </div>
+        <div id="changePasswordError" class="error-message"></div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-cancel" onclick="closeChangeUserPasswordModal()">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" onclick="changeUserPassword()">เปลี่ยนรหัสผ่าน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <audio id="alarmAudio" preload="auto">
+    <source src="/sound/alarm/alarm.mp3" type="audio/mpeg">
+  </audio>
+  <script src="js/admin.js"></script>
+  <script src="js/admin_user_management.js"></script>
+</body>
+</html>
+
+
