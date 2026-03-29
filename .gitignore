@@ -1,6 +1,7 @@
 ﻿node_modules/
 uploads/
 backend/*.db
+backend/*.db-*
 backend/*.log
 *.log
 .env

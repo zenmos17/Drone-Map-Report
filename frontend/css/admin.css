@@ -961,3 +961,209 @@
       margin-top: 10px;
       min-height: 20px;
     }
+
+    @media (max-width: 768px) {
+      body {
+        font-size: 15px;
+      }
+
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+
+      .navbar h1 {
+        font-size: 1.15rem;
+        line-height: 1.3;
+      }
+
+      .navbar-right {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .user-info {
+        grid-column: 1 / -1;
+        font-size: 0.9rem;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .container {
+        margin: 12px auto;
+        padding: 0 10px;
+      }
+
+      .admin-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .admin-title {
+        font-size: 1.35rem;
+      }
+
+      .tab-buttons {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .tab-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+      }
+
+      #map {
+        height: 52vh;
+        min-height: 300px;
+      }
+
+      .map-action-btn,
+      .map-utility-btn,
+      .map-layer-btn {
+        font-size: 0.78rem;
+      }
+
+      .map-utility-controls {
+        right: 8px;
+        bottom: 48px;
+      }
+
+      .map-layer-toggle {
+        left: 8px;
+        bottom: 8px;
+      }
+
+      .reports-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .datetime-filters {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .filter-group {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .filter-btn {
+        width: 100%;
+      }
+
+      .reports-table th,
+      .reports-table td,
+      .users-table th,
+      .users-table td {
+        font-size: 0.84rem;
+        padding: 8px;
+      }
+
+      .image-thumbnail {
+        max-width: 42px;
+        max-height: 42px;
+      }
+
+      .modal-content {
+        width: calc(100vw - 18px);
+        margin: 12px auto;
+        max-height: calc(100vh - 24px);
+        padding: 14px;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-item.full {
+        grid-column: auto;
+      }
+
+      .detail-map {
+        height: 220px;
+      }
+
+      .detail-map-utility-controls {
+        right: 8px;
+        bottom: 46px;
+      }
+
+      .detail-map-layer-toggle {
+        left: 8px;
+        bottom: 8px;
+      }
+
+      .report-action-modal {
+        width: calc(100vw - 18px);
+        max-height: calc(100vh - 24px);
+      }
+
+      .report-action-textarea {
+        min-height: 130px;
+      }
+
+      .report-action-buttons,
+      .form-buttons,
+      .user-actions {
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar h1 {
+        font-size: 1.02rem;
+      }
+
+      .admin-title {
+        font-size: 1.15rem;
+      }
+
+      #map {
+        height: 48vh;
+        min-height: 250px;
+      }
+
+      .map-action-btn {
+        top: 8px;
+        right: 8px;
+        padding: 6px 10px;
+      }
+
+      .map-utility-btn,
+      .detail-map-utility-btn {
+        padding: 6px 8px;
+      }
+
+      .map-layer-btn,
+      .detail-map-layer-btn {
+        padding: 6px 9px;
+      }
+
+      .users-toolbar {
+        justify-content: stretch;
+      }
+    }

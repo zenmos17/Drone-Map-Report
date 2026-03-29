@@ -1,7 +1,6 @@
 ﻿let map;
 let markers = [];
 let userLocationMarker = null;
-let selectedCoordsMarker = null;
 let allReports = [];
 let reporterProfile = null;
 
@@ -9,6 +8,7 @@ const REPORTER_SESSION_KEY = 'reporterProfile';
 const REPORTER_LOGIN_PAGE = '/reporter-login.html';
 
 const reportForm = document.getElementById('reportForm');
+const submitReportBtn = reportForm ? reportForm.querySelector('button[type="submit"]') : null;
 const currentReporterName = document.getElementById('currentReporterName');
 const logoutBtn = document.getElementById('logoutBtn');
 const locationInput = document.getElementById('location');
@@ -24,6 +24,7 @@ const reportsTableBody = document.getElementById('reportsTableBody');
 const formMessage = document.getElementById('formMessage');
 const submitLoadingOverlay = document.getElementById('submitLoadingOverlay');
 const mapLoadingOverlay = document.getElementById('mapLoadingOverlay');
+const mapContainer = document.getElementById('mapContainer');
 const reportsFromInput = document.getElementById('reportsFrom');
 const reportsToInput = document.getElementById('reportsTo');
 const clearReportFilterBtn = document.getElementById('clearReportFilter');
@@ -35,12 +36,14 @@ const captureImageBtn = document.getElementById('captureImageBtn');
 const imagePickerLabel = document.querySelector('label[for="image"].file-input-label');
 let preferCameraCapture = false;
 let selectedImageFiles = [];
+let isSubmittingReport = false;
 
 const GEO_OPTIONS = {
   enableHighAccuracy: true,
   timeout: 15000,
   maximumAge: 0
 };
+const MAX_GPS_ACCURACY_METERS = 80;
 
 const THAI_TIME_OPTIONS = {
   timeZone: 'Asia/Bangkok',
@@ -204,23 +207,6 @@ function initMap() {
 
   streetLayer.addTo(map);
   setupMapLayerToggle(streetLayer, satelliteLayer);
-
-  map.on('click', (e) => {
-    latitudeInput.value = e.latlng.lat.toFixed(4);
-    longitudeInput.value = e.latlng.lng.toFixed(4);
-    if (selectedCoordsMarker) {
-      map.removeLayer(selectedCoordsMarker);
-    }
-    selectedCoordsMarker = L.circleMarker([e.latlng.lat, e.latlng.lng], {
-      radius: 8,
-      fillColor: '#dc3545',
-      color: '#ffffff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.95
-    }).addTo(map).bindPopup('พิกัดที่เลือก');
-    showMessage('อัปเดตพิกัดแล้ว', 'success');
-  });
 }
 
 function setupMapLayerToggle(streetLayer, satelliteLayer) {
@@ -336,75 +322,100 @@ function initMapFullscreenControls() {
   });
 }
 
-function getCurrentLocation() {
-  if (!navigator.geolocation) {
-    showMessage('ไม่สามารถใช้ GPS ได้: เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง', 'error');
-    return;
-  }
+function getCurrentLocation(showLoading = true) {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      showMessage('ไม่สามารถใช้ GPS ได้: เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง', 'error');
+      resolve(false);
+      return;
+    }
 
-  if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    showMessage('มือถือจะใช้ตำแหน่งได้เมื่อเปิดผ่าน HTTPS เท่านั้น (ลิงก์ปัจจุบันเป็น HTTP)', 'error');
-    return;
-  }
+    if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      showMessage('จะใช้ตำแหน่งได้เมื่อเปิดผ่าน HTTPS เท่านั้น (ลิงก์ปัจจุบันเป็น HTTP)', 'error');
+      resolve(false);
+      return;
+    }
 
-  setSubmitLoading(true, 'กำลังค้นหาตำแหน่ง...');
+    if (showLoading) {
+      setMapLoading(true, 'กำลังค้นหาตำแหน่ง...');
+    }
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const altitude = position.coords.altitude;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const altitude = position.coords.altitude;
+        const accuracy = Number(position.coords.accuracy);
 
-      latitudeInput.value = lat.toFixed(4);
-      longitudeInput.value = lng.toFixed(4);
+        // Reject coarse positions (usually IP/Wi-Fi based) to avoid fake/unstable GPS on desktop.
+        if (!Number.isFinite(accuracy) || accuracy > MAX_GPS_ACCURACY_METERS) {
+          if (showLoading) {
+            setMapLoading(false);
+          }
+          showMessage('ไม่พบสัญญาณ GPS จริงจากอุปกรณ์ (ความแม่นยำไม่พอ) กรุณาใช้มือถือที่เปิด GPS', 'error');
+          resolve(false);
+          return;
+        }
 
-      if (typeof altitude === 'number' && !Number.isNaN(altitude) && altitude >= 0) {
-        altitudeInput.value = Math.round(altitude);
-      }
+        latitudeInput.value = lat.toFixed(4);
+        longitudeInput.value = lng.toFixed(4);
 
-      map.setView([lat, lng], 15);
+        if (typeof altitude === 'number' && !Number.isNaN(altitude) && altitude >= 0) {
+          altitudeInput.value = Math.round(altitude);
+        }
 
-      if (userLocationMarker) {
-        map.removeLayer(userLocationMarker);
-      }
+        map.setView([lat, lng], 15);
 
-      userLocationMarker = L.circleMarker([lat, lng], {
-        radius: 8,
-        fillColor: '#28a745',
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8
-      }).addTo(map).bindPopup('ตำแหน่งของคุณ');
+        if (userLocationMarker) {
+          map.removeLayer(userLocationMarker);
+        }
 
-      setSubmitLoading(false);
-      showMessage('ได้ตำแหน่งของคุณแล้ว', 'success');
-    },
-    (error) => {
-      setSubmitLoading(false);
-      console.error('Geolocation error:', error);
+        userLocationMarker = L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: '#28a745',
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(map).bindPopup('ตำแหน่งของคุณ');
 
-      if (error.code === error.PERMISSION_DENIED) {
-        showMessage('ถูกปฏิเสธสิทธิ์ตำแหน่ง: กรุณาอนุญาต Location ให้เบราว์เซอร์', 'error');
-        return;
-      }
+        if (showLoading) {
+          setMapLoading(false);
+        }
+        showMessage('ได้ตำแหน่งของคุณแล้ว', 'success');
+        resolve(true);
+      },
+      (error) => {
+        if (showLoading) {
+          setMapLoading(false);
+        }
+        console.error('Geolocation error:', error);
 
-      if (error.code === error.TIMEOUT) {
-        showMessage('หา GPS ไม่ทันเวลา กรุณาลองใหม่ในที่โล่งหรือเปิด High accuracy', 'error');
-        return;
-      }
+        if (error.code === error.PERMISSION_DENIED) {
+          showMessage('ถูกปฏิเสธสิทธิ์ตำแหน่ง: กรุณาอนุญาต Location ให้เบราว์เซอร์', 'error');
+          resolve(false);
+          return;
+        }
 
-      if (error.code === error.POSITION_UNAVAILABLE) {
-        showMessage('ไม่พบข้อมูลตำแหน่งจากอุปกรณ์ กรุณาเปิด GPS แล้วลองใหม่', 'error');
-        return;
-      }
+        if (error.code === error.TIMEOUT) {
+          showMessage('หา GPS ไม่ทันเวลา กรุณาลองใหม่ในที่โล่งหรือเปิด High accuracy', 'error');
+          resolve(false);
+          return;
+        }
 
-      showMessage('ไม่สามารถระบุตำแหน่งได้ คุณยังแตะแผนที่เพื่อเลือกพิกัดเองได้', 'error');
-    },
-    GEO_OPTIONS
-  );
+        if (error.code === error.POSITION_UNAVAILABLE) {
+          showMessage('ไม่พบข้อมูลตำแหน่งจากอุปกรณ์ กรุณาเปิด GPS แล้วลองใหม่', 'error');
+          resolve(false);
+          return;
+        }
+
+        showMessage('ไม่สามารถระบุตำแหน่งได้ กรุณาลองใหม่อีกครั้ง', 'error');
+        resolve(false);
+      },
+      GEO_OPTIONS
+    );
+  });
 }
-
 function clearCoordinates() {
   latitudeInput.value = '';
   longitudeInput.value = '';
@@ -416,24 +427,11 @@ function clearMapTempMarkers() {
     map.removeLayer(userLocationMarker);
     userLocationMarker = null;
   }
-  if (selectedCoordsMarker) {
-    map.removeLayer(selectedCoordsMarker);
-    selectedCoordsMarker = null;
-  }
-  showMessage('ล้างค่าพิกัดและหมุดชั่วคราวแล้ว', 'success');
+  showMessage('ล้างค่าพิกัดแล้ว', 'success');
 }
 
 async function submitReport() {
-  const reporterName = (reporterProfile?.name || '').trim();
-  const reporterPhone = (reporterProfile?.phone || '').trim();
-  const location = locationInput.value.trim();
-  const description = descriptionInput.value.trim();
-  const latitude = latitudeInput.value.trim();
-  const longitude = longitudeInput.value.trim();
-  const altitude = altitudeInput.value.trim();
-
-  if (!reporterName || !reporterPhone || !latitude || !longitude) {
-    showMessage('Please fill in name, phone, and coordinates.', 'error');
+  if (isSubmittingReport) {
     return;
   }
 
@@ -443,9 +441,36 @@ async function submitReport() {
     return;
   }
 
+  isSubmittingReport = true;
   setSubmitLoading(true);
+  if (submitReportBtn) {
+    submitReportBtn.disabled = true;
+  }
 
   try {
+    const reporterName = (reporterProfile?.name || '').trim();
+    const reporterPhone = (reporterProfile?.phone || '').trim();
+    const location = locationInput.value.trim();
+    const description = descriptionInput.value.trim();
+    let latitude = latitudeInput.value.trim();
+    let longitude = longitudeInput.value.trim();
+    const altitude = altitudeInput.value.trim();
+
+    if (!latitude || !longitude) {
+      const hasLocation = await getCurrentLocation(false);
+      if (!hasLocation) {
+        showMessage('ไม่สามารถส่งคำแจ้งได้ เพราะยังไม่ได้พิกัดตำแหน่ง', 'error');
+        return;
+      }
+      latitude = latitudeInput.value.trim();
+      longitude = longitudeInput.value.trim();
+    }
+
+    if (!reporterName || !reporterPhone || !latitude || !longitude) {
+      showMessage('กรุณากรอกชื่อ เบอร์โทร และพิกัดให้ครบถ้วน', 'error');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('reporterName', reporterName);
     formData.append('location', location || '-');
@@ -501,6 +526,10 @@ async function submitReport() {
     showMessage('Failed: ' + error.message, 'error');
   } finally {
     setSubmitLoading(false);
+    if (submitReportBtn) {
+      submitReportBtn.disabled = false;
+    }
+    isSubmittingReport = false;
   }
 }
 
@@ -746,20 +775,51 @@ function getReportImages(report) {
 }
 
 function setSubmitLoading(isLoading, text = 'กำลังส่งคำแจ้ง...') {
-  const applyOverlayState = (overlayEl) => {
-    if (!overlayEl) {
-      return;
-    }
-    const loadingBox = overlayEl.querySelector('.loading-box');
-    if (loadingBox) {
-      loadingBox.textContent = text;
-    }
-    overlayEl.classList.toggle('active', isLoading);
-    overlayEl.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
-  };
+  if (!submitLoadingOverlay) {
+    return;
+  }
+  const loadingBox = submitLoadingOverlay.querySelector('.loading-box');
+  if (loadingBox) {
+    loadingBox.textContent = text;
+  }
+  submitLoadingOverlay.classList.toggle('active', isLoading);
+  submitLoadingOverlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
+}
 
-  applyOverlayState(submitLoadingOverlay);
-  applyOverlayState(mapLoadingOverlay);
+function setMapLoading(isLoading, text = 'กำลังค้นหาตำแหน่ง...') {
+  const mapIsFullscreen = Boolean(
+    (document.fullscreenElement && mapContainer && document.fullscreenElement === mapContainer) ||
+    (document.webkitFullscreenElement && mapContainer && document.webkitFullscreenElement === mapContainer) ||
+    document.body.classList.contains('map-force-fullscreen')
+  );
+
+  if (!isLoading) {
+    setSubmitLoading(false);
+    if (mapLoadingOverlay) {
+      mapLoadingOverlay.classList.remove('active');
+      mapLoadingOverlay.setAttribute('aria-hidden', 'true');
+    }
+    return;
+  }
+
+  if (mapIsFullscreen) {
+    setSubmitLoading(false);
+    if (mapLoadingOverlay) {
+      const loadingBox = mapLoadingOverlay.querySelector('.loading-box');
+      if (loadingBox) {
+        loadingBox.textContent = text;
+      }
+      mapLoadingOverlay.classList.add('active');
+      mapLoadingOverlay.setAttribute('aria-hidden', 'false');
+    }
+    return;
+  }
+
+  setSubmitLoading(true, text);
+  if (mapLoadingOverlay) {
+    mapLoadingOverlay.classList.remove('active');
+    mapLoadingOverlay.setAttribute('aria-hidden', 'true');
+  }
 }
 
 function showMessage(text, type) {
@@ -899,4 +959,3 @@ window.addEventListener('click', (e) => {
     detailModal.classList.remove('active');
   }
 });
-

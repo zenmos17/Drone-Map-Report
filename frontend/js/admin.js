@@ -19,32 +19,26 @@ const reportedReportIds = new Set();
 let pendingActionReportId = null;
 const reportedDetailById = new Map();
 
-const markerShadowUrl = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png';
-const orangeMarkerIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
-  shadowUrl: markerShadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+function createInlineMarkerIcon(color) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41">
+      <path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 22.7 12.5 41 12.5 41S25 22.7 25 12.5C25 5.6 19.4 0 12.5 0Z"
+            fill="${color}" stroke="#ffffff" stroke-width="1.2"/>
+      <circle cx="12.5" cy="12.5" r="4.2" fill="#ffffff"/>
+    </svg>
+  `.trim();
 
-const blueMarkerIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: markerShadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-const greenMarkerIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-  shadowUrl: markerShadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+  return new L.Icon({
+    iconUrl: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+  });
+}
+
+const orangeMarkerIcon = createInlineMarkerIcon('#f59e0b');
+const blueMarkerIcon = createInlineMarkerIcon('#3b82f6');
+const greenMarkerIcon = createInlineMarkerIcon('#22c55e');
 
 const adminReportsFromInput = document.getElementById('adminReportsFrom');
 const adminReportsToInput = document.getElementById('adminReportsTo');
@@ -584,6 +578,7 @@ function updateDashboard() {
 function updateMap() {
   markers.forEach((marker) => map.removeLayer(marker));
   markers = [];
+  markerByReportId.clear();
 
   filteredReports.forEach((report) => {
     const lat = Number(report.latitude);
@@ -610,7 +605,7 @@ function updateMap() {
 
   if (markers.length > 0) {
     const group = new L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.1), { maxZoom: 15 });
+    map.fitBounds(group.getBounds().pad(0.1), { maxZoom: 15, animate: false });
   }
 }
 
