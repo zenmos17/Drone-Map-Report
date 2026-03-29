@@ -52,6 +52,7 @@ const THAI_TIME_OPTIONS = {
   timeZone: 'Asia/Bangkok',
   hour12: false
 };
+const MAX_GPS_ACCURACY_METERS = 80;
 let adminActiveBaseLayer = 'street';
 const REALTIME_RECONNECT_DELAY_MS = 3000;
 const REALTIME_RELOAD_DELAY_MS = 250;
@@ -135,6 +136,16 @@ function getMarkerIconByState(reportId) {
   if (highlightedReportIds.has(reportId)) return blueMarkerIcon;
   return orangeMarkerIcon;
 }
+
+function isReliableGpsPosition(position) {
+  const accuracy = Number(position?.coords?.accuracy);
+  return Number.isFinite(accuracy) && accuracy <= MAX_GPS_ACCURACY_METERS;
+}
+
+function showNoRealGpsAlert() {
+  alert('ไม่พบสัญญาณ GPS จริงจากอุปกรณ์ (ความแม่นยำไม่พอ) กรุณาใช้มือถือที่เปิด GPS');
+}
+
 function initMap() {
   map = L.map('map').setView([13.7563, 100.5018], 11);
 
@@ -195,6 +206,11 @@ function locateAdminCurrentPosition() {
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
+      if (!isReliableGpsPosition(position)) {
+        showNoRealGpsAlert();
+        return;
+      }
+
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
 
@@ -1057,6 +1073,11 @@ function renderReportDetailMap(report) {
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (!isReliableGpsPosition(position)) {
+            showNoRealGpsAlert();
+            return;
+          }
+
           const uLat = position.coords.latitude;
           const uLng = position.coords.longitude;
 
